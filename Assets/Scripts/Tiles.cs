@@ -79,7 +79,6 @@ public class Tiles : MonoBehaviour
 
     public GameObject GetTile()
     {
-        return possibleTiles[0];
-        return possibleTiles[Random.Range(0, possibleTiles.Length + 1)];
+        return possibleTiles[Random.Range(0, possibleTiles.Length)];
     }
 }
