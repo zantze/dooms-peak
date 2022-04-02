@@ -32,17 +32,11 @@ public class Player : MonoBehaviour
     private bool landed = false;
     private bool took_off = false;
 
-    private Vector3 directMovement;
-    private Vector3 reverseMovement;
-
-    public ParticleSystem snowEffect;
-
 
     public Tiles tiles;
     // Start is called before the first frame update
     void Start()
     {
-        snowEffect.Stop();
         startPos = transform.position;
         cc = GetComponent<CharacterController>();
         goDir = transform.forward;
@@ -53,8 +47,6 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        bool goinBackward = false;
 
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.2f))
@@ -75,12 +67,7 @@ public class Player : MonoBehaviour
 
         go = new Vector3(0, go.y, 0);
 
-        go += transform.forward;
-
-        if (speed > 10)
-        {
-            speed = 10;
-        }
+        go += transform.forward * downwardSpeed;
 
 
         if (grounded)
@@ -89,60 +76,49 @@ public class Player : MonoBehaviour
             holdSpin = false;
         }
 
-        Vector3 goNormalized = go;
-        goNormalized.y = 0;
-        goNormalized = goNormalized.normalized;
 
         float angle = Vector3.Angle(transform.forward, targetDir);
-        float angle2 = Vector3.Angle(goNormalized, targetDir);
+        float angle2 = Vector3.Angle(goDir, targetDir);
         float angle3 = Vector3.Angle(transform.forward, goDir);
         float brakeFactor = 1 - (Mathf.Abs(90 - angle) / 90);
 
-        goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3);
-
-        if (brakeFactor > 0.85f && grounded)
+        if (angle2 < 90f && grounded)
         {
-            speed = Mathf.Lerp(speed, 0, Time.deltaTime);
-            snowEffect.Play();
+            goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3);
         }
 
         else
         {
-            snowEffect.Stop();
+            if (speed > 0)
+                speed -= Time.deltaTime / 2;
+
+            if (grounded)
+            {
+                goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3 * (1 - brakeFactor));
+            }
         }
 
-        if (grounded)
+        Vector3 actualGoDir = goDir;
+
+        if (angle3 > 90)
         {
-
-            if (angle < 90)
-            {
-                directMovement = Vector3.Lerp(directMovement, goDir, Time.deltaTime * 3);
-            }
-
-            else
-            {
-                directMovement = Vector3.Lerp(directMovement, Vector3.zero, Time.deltaTime * 3);
-            }
-
-            if (angle > 90)
-            {
-                reverseMovement = Vector3.Lerp(reverseMovement, -goDir, Time.deltaTime * 3);
-            }
-
-            else
-            {
-                reverseMovement = Vector3.Lerp(reverseMovement, Vector3.zero, Time.deltaTime * 3);
-            }
-
+            actualGoDir = -actualGoDir;
         }
 
+        Debug.Log(actualGoDir);
 
-        go += (directMovement + reverseMovement) * speed;
+        if (angle > 80 && angle < 100 && grounded)
+            actualGoDir.x *= (1 - brakeFactor);
+
+        go += actualGoDir * speed;
+
+
 
         go.y += -9f * Time.deltaTime;
 
         if (!grounded)
         {
+
             // reset jump
             jumpforce = 0;
             holdingjump = false;
@@ -163,9 +139,8 @@ public class Player : MonoBehaviour
         }
 
         Debug.DrawRay(transform.position, goDir, Color.green);
-        Debug.DrawRay(transform.position, go.normalized, Color.blue);
+        Debug.DrawRay(transform.position, actualGoDir, Color.blue);
         Debug.DrawRay(transform.position, targetDir, Color.red);
-        Debug.DrawRay(transform.position, reverseMovement, Color.black);
 
         howMuchMoved = transform.position - startPos;
 
@@ -175,9 +150,7 @@ public class Player : MonoBehaviour
             startPos = transform.position;
         }
 
-
-        Vector3 visualLook = Vector3.Lerp(visual.transform.position + visual.transform.forward, visual.transform.position + targetDir, Time.deltaTime * 10);
-        visual.LookAt(visualLook);
+        visual.LookAt(visual.transform.position + targetDir);
 
         animations();
 
@@ -210,7 +183,6 @@ public class Player : MonoBehaviour
             animator.Play("fakie");
             return;
         }
-
 
         animator.Play("rolling");
         return;
@@ -248,17 +220,11 @@ public class Player : MonoBehaviour
         {
             letSpin();
         }
-
-        if (Input.GetKey(KeyCode.S))
-        {
-            speed += Time.deltaTime;
-        }
     }
 
     private void holdjump()
     {
         holdingjump = true;
-        jumpforce = 1;
     }
 
     private void jump()
