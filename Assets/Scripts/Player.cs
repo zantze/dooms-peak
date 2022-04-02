@@ -31,6 +31,10 @@ public class Player : MonoBehaviour
 
     private bool landed = false;
     private bool took_off = false;
+    private bool hitting = false;
+    private bool losetrack = false;
+
+    bool goinBackward = false;
 
     private Vector3 directMovement;
     private Vector3 reverseMovement;
@@ -53,20 +57,22 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        bool goinBackward = false;
-
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.2f))
         {
             grounded = true;
-            landed = true;
+            if (hitting == false)
+                landed = true;
+
+            hitting = true;
         }
 
         else
         {
             grounded = false;
             took_off = true;
+
+            hitting = false;
         }
 
 
@@ -96,13 +102,13 @@ public class Player : MonoBehaviour
         float angle = Vector3.Angle(transform.forward, targetDir);
         float angle2 = Vector3.Angle(goNormalized, targetDir);
         float angle3 = Vector3.Angle(transform.forward, goDir);
+        float angle4 = Vector3.Angle(goNormalized, -targetDir);
         float brakeFactor = 1 - (Mathf.Abs(90 - angle) / 90);
 
         goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3);
 
-        if (brakeFactor > 0.85f && grounded)
+        if (losetrack && grounded)
         {
-            speed = Mathf.Lerp(speed, 0, Time.deltaTime);
             snowEffect.Play();
         }
 
@@ -110,28 +116,58 @@ public class Player : MonoBehaviour
         {
             snowEffect.Stop();
         }
+        
+
+        if (landed)
+        {
+            Debug.Log(angle);
+            if (angle > 90)
+            {
+                goinBackward = true;
+            }
+
+            else
+            {
+                goinBackward = false;
+            }
+        }
 
         if (grounded)
         {
-
-            if (angle < 90)
+            if ((angle2 < 80 || angle4 < 80) && !losetrack)
             {
-                directMovement = Vector3.Lerp(directMovement, goDir, Time.deltaTime * 3);
+
+                if (goinBackward)
+                {
+                    reverseMovement = Vector3.Lerp(reverseMovement, -goDir, Time.deltaTime * 3);
+                    directMovement = Vector3.Lerp(directMovement, Vector3.zero, Time.deltaTime * 3);
+                }
+
+                else
+                {
+                    directMovement = Vector3.Lerp(directMovement, goDir, Time.deltaTime * 3);
+                    reverseMovement = Vector3.Lerp(reverseMovement, Vector3.zero, Time.deltaTime * 3);
+                }
+
             }
 
             else
             {
-                directMovement = Vector3.Lerp(directMovement, Vector3.zero, Time.deltaTime * 3);
-            }
+                losetrack = true;
 
-            if (angle > 90)
-            {
-                reverseMovement = Vector3.Lerp(reverseMovement, -goDir, Time.deltaTime * 3);
-            }
+                if (Vector3.Angle(goNormalized, targetDir) < 35)
+                {
+                    goinBackward = false;
+                    losetrack = false;
+                }
 
-            else
-            {
-                reverseMovement = Vector3.Lerp(reverseMovement, Vector3.zero, Time.deltaTime * 3);
+                if (Vector3.Angle(-goNormalized, targetDir) < 35)
+                {
+
+                    goinBackward = true;
+                    losetrack = false;
+
+                }
             }
 
         }
