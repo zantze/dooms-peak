@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
     public Transform visual;
     private Vector3 go;
     private Vector3 goDir;
+    private Vector3 targetDir;
     private Vector3 currentGoDir;
     public float speed;
 
@@ -28,6 +29,9 @@ public class Player : MonoBehaviour
 
     private bool grounded = false;
 
+    private bool landed = false;
+    private bool took_off = false;
+
 
     public Tiles tiles;
     // Start is called before the first frame update
@@ -36,32 +40,79 @@ public class Player : MonoBehaviour
         startPos = transform.position;
         cc = GetComponent<CharacterController>();
         goDir = transform.forward;
+        targetDir = transform.forward;
         
     }
 
     // Update is called once per frame
     void Update()
     {
+
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.2f))
+        {
+            grounded = true;
+            landed = true;
+        }
+
+        else
+        {
+            grounded = false;
+            took_off = true;
+        }
+
+
         speed += Time.deltaTime / 4;
         downwardSpeed = speed;
 
         go = new Vector3(0, go.y, 0);
+
         go += transform.forward * downwardSpeed;
 
-        Vector3 goDir2 = goDir;
-
-        if (goDir.z >= 0)
-        {
-            goDir2 = -goDir2;
-        }
 
         if (grounded)
         {
-            currentGoDir = goDir2;
+            //currentGoDir = goDir2;
             holdSpin = false;
         }
 
-        go += currentGoDir * speed;
+
+        float angle = Vector3.Angle(transform.forward, targetDir);
+        float angle2 = Vector3.Angle(goDir, targetDir);
+        float angle3 = Vector3.Angle(transform.forward, goDir);
+        float brakeFactor = 1 - (Mathf.Abs(90 - angle) / 90);
+
+        if (angle2 < 90f && grounded)
+        {
+            goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3);
+        }
+
+        else
+        {
+            if (speed > 0)
+                speed -= Time.deltaTime / 2;
+
+            if (grounded)
+            {
+                goDir = Vector3.Lerp(goDir, targetDir, Time.deltaTime * 3 * (1 - brakeFactor));
+            }
+        }
+
+        Vector3 actualGoDir = goDir;
+
+        if (angle3 > 90)
+        {
+            actualGoDir = -actualGoDir;
+        }
+
+        Debug.Log(actualGoDir);
+
+        if (angle > 80 && angle < 100 && grounded)
+            actualGoDir.x *= (1 - brakeFactor);
+
+        go += actualGoDir * speed;
+
+
 
         go.y += -9f * Time.deltaTime;
 
@@ -87,7 +138,9 @@ public class Player : MonoBehaviour
                 jumpforce += Time.deltaTime * 4;
         }
 
-        Debug.DrawRay(transform.position, goDir2, Color.green);
+        Debug.DrawRay(transform.position, goDir, Color.green);
+        Debug.DrawRay(transform.position, actualGoDir, Color.blue);
+        Debug.DrawRay(transform.position, targetDir, Color.red);
 
         howMuchMoved = transform.position - startPos;
 
@@ -97,20 +150,12 @@ public class Player : MonoBehaviour
             startPos = transform.position;
         }
 
-        visual.LookAt(visual.transform.position + goDir);
-
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.2f))
-        {
-            grounded = true;
-        }
-
-        else
-        {
-            grounded = false;
-        }
+        visual.LookAt(visual.transform.position + targetDir);
 
         animations();
+
+        took_off = false;
+        landed = false;
     }
 
     void animations()
@@ -205,7 +250,7 @@ public class Player : MonoBehaviour
 
     void rotate(float dire)
     {
-        goDir = Quaternion.Euler(0, dire * turnSpeed * Time.deltaTime * 144, 0) * goDir;
+        targetDir = Quaternion.Euler(0, dire * turnSpeed * Time.deltaTime * 144, 0) * targetDir;
     }
 
     public void bounce()
