@@ -20,7 +20,7 @@ public class Jumper : MonoBehaviour
     {
         if (other.gameObject.GetComponent<Player>())
         {
-            tuomioUI.current.DisplayTrick(new Trick("Ramp", 50));
+            other.gameObject.GetComponent<Player>().DoTrick("Ramp", 50);
             other.gameObject.GetComponent<Player>().bounce();
         }
     }

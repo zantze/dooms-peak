@@ -56,12 +56,14 @@ public class Player : MonoBehaviour
     public AudioSource hitSound;
     public AudioSource moanSound;
     public AudioSource takkiSound;
-
+    public AudioSource dingSound;
 
     public Tiles tiles;
     // Start is called before the first frame update
     void Start()
     {
+        Variables.current = new Variables();
+
         snowEffect.Stop();
         startPos = transform.position;
         cc = GetComponent<CharacterController>();
@@ -220,17 +222,17 @@ public class Player : MonoBehaviour
 
             if (angles > 480)
             {
-                tuomioUI.current.DisplayTrick(new Trick("540 air", 500));
+                DoTrick("540 air", 500);
             }
 
             if (angles > 300)
             {
-                tuomioUI.current.DisplayTrick(new Trick("360 air", 200));
+                DoTrick("360 air", 200);
             }
             
             else if (angles > 120)
             {
-                tuomioUI.current.DisplayTrick(new Trick("180 air", 50));
+                DoTrick("180 air", 50);
             }
 
             
@@ -336,12 +338,12 @@ public class Player : MonoBehaviour
 
         void inputs()
     {
-        if (Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
             rotate(1);
         }
 
-        if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
             rotate(-1);
         }
@@ -366,10 +368,11 @@ public class Player : MonoBehaviour
             letSpin();
         }
 
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
             speed += Time.deltaTime;
         }
+
     }
 
     private void holdjump()
@@ -424,7 +427,7 @@ public class Player : MonoBehaviour
         Flagpole pole = other.gameObject.GetComponent<Flagpole>();
         if (pole != null )
         {
-            tuomioUI.current.DisplayTrick(new Trick("Checkpoint", 500));
+            DoTrick("Checkpoint", 500);
         }
     }
 
@@ -451,5 +454,11 @@ public class Player : MonoBehaviour
         GameCamera.current.deathCamTarget = ragdoll.transform.Find("Pelvis");
 
         death = true;
+    }
+
+    public void DoTrick(string name, int points)
+    {
+        dingSound.Play();
+        tuomioUI.current.DisplayTrick(new Trick(name, points));
     }
 }
