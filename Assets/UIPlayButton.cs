@@ -18,7 +18,7 @@ public class UIPlayButton : MonoBehaviour
     }
 
     public void ChangeToGame() {
-        SceneManager.LoadScene("Game", LoadSceneMode.Single);
+        SceneManager.LoadScene("Cutscenes", LoadSceneMode.Single);
     }
 
     public void ChangeToMainMenu()
