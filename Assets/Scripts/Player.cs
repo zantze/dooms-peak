@@ -79,6 +79,11 @@ public class Player : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.2f))
         {
+            if (hit.collider.gameObject.GetComponent<Obstacle>())
+            {
+                Die();
+            }
+
             grounded = true;
             if (hitting == false)
                 landed = true;
@@ -428,6 +433,12 @@ public class Player : MonoBehaviour
         if (pole != null )
         {
             DoTrick("Checkpoint", 500);
+        }
+
+        Obstacle obstacle = other.gameObject.GetComponent<Obstacle>();
+        if (obstacle != null)
+        {
+            Die();
         }
     }
 
