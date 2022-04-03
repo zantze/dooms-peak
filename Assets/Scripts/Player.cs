@@ -42,6 +42,15 @@ public class Player : MonoBehaviour
     public ParticleSystem snowEffect;
 
 
+    private float angles = 0f;
+    private Vector3 previousAirAngle;
+
+    public GameObject ragdoll;
+
+    private bool death = false;
+    private float deathTimer = 0f;
+
+
     public Tiles tiles;
     // Start is called before the first frame update
     void Start()
@@ -70,7 +79,9 @@ public class Player : MonoBehaviour
         else
         {
             grounded = false;
-            took_off = true;
+
+            if (hitting == true)
+                took_off = true;
 
             hitting = false;
         }
@@ -120,7 +131,6 @@ public class Player : MonoBehaviour
 
         if (landed)
         {
-            Debug.Log(angle);
             if (angle > 90)
             {
                 goinBackward = true;
@@ -172,6 +182,40 @@ public class Player : MonoBehaviour
 
         }
 
+        if (!grounded)
+        {
+            if (previousAirAngle == Vector3.zero)
+            {
+                previousAirAngle = targetDir;
+            }
+
+            angles += Vector3.Angle(previousAirAngle, targetDir);
+            previousAirAngle = targetDir;
+        }
+
+        else
+        {
+            previousAirAngle = Vector3.zero;
+
+            if (angles > 480)
+            {
+                tuomioUI.current.DisplayTrick(new Trick("540 air", 500));
+            }
+
+            if (angles > 300)
+            {
+                tuomioUI.current.DisplayTrick(new Trick("360 air", 200));
+            }
+            
+            else if (angles > 120)
+            {
+                tuomioUI.current.DisplayTrick(new Trick("180 air", 50));
+            }
+
+            
+
+            angles = 0;
+        }
 
         go += (directMovement + reverseMovement) * speed;
 
@@ -219,6 +263,16 @@ public class Player : MonoBehaviour
 
         took_off = false;
         landed = false;
+
+        if (death)
+        {
+            deathTimer += Time.deltaTime;
+
+            if (deathTimer > 1)
+            {
+                Time.timeScale = 1f;
+            }
+        }
     }
 
     void animations()
@@ -285,7 +339,7 @@ public class Player : MonoBehaviour
             letSpin();
         }
 
-        if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.W))
         {
             speed += Time.deltaTime;
         }
@@ -320,7 +374,8 @@ public class Player : MonoBehaviour
 
     void rotate(float dire)
     {
-        targetDir = Quaternion.Euler(0, dire * turnSpeed * Time.deltaTime * 144, 0) * targetDir;
+        float holding = holdSpin ? 2 : 1;
+        targetDir = Quaternion.Euler(0, dire * turnSpeed * Time.deltaTime * 144 * holding, 0) * targetDir;
     }
 
     public void bounce()
@@ -333,7 +388,7 @@ public class Player : MonoBehaviour
         Obstacle ob = hit.gameObject.GetComponent<Obstacle>();
         if (ob != null )
         {
-            Debug.Log("Die");
+            Die();
         }
     }
 
@@ -342,7 +397,22 @@ public class Player : MonoBehaviour
         Flagpole pole = other.gameObject.GetComponent<Flagpole>();
         if (pole != null )
         {
-            Debug.Log("points");
+            tuomioUI.current.DisplayTrick(new Trick("Checkpoint", 500));
         }
+    }
+
+    public void Die()
+    {
+        Transform dude = visual.Find("radLad");
+        dude.gameObject.SetActive(false);
+        ragdoll.SetActive(true);
+        ragdoll.transform.position = dude.transform.position;
+        ragdoll.transform.rotation = dude.transform.rotation;
+
+        Time.timeScale = 0.2f;
+
+        GameCamera.current.deathCamTarget = ragdoll.transform.Find("Pelvis");
+
+        death = true;
     }
 }
