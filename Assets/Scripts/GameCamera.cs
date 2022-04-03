@@ -21,6 +21,7 @@ public class GameCamera : MonoBehaviour
         if (deathCamTarget != null)
         {
             this.transform.position = Vector3.Lerp(this.transform.position, deathCamTarget.position + (-Vector3.forward + Vector3.up) * 9, Time.deltaTime * 4);
+            
             Quaternion targetRotation = Quaternion.LookRotation(deathCamTarget.position - transform.position);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 5 * Time.deltaTime);
         }

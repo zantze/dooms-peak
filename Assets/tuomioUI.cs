@@ -9,6 +9,8 @@ public class tuomioUI : MonoBehaviour
     public Text trickDisplay;
     public GameObject trickPrefab;
 
+    public int score;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,5 +27,6 @@ public class tuomioUI : MonoBehaviour
     {
         GameObject text = Instantiate(trickPrefab, transform.position, Quaternion.identity, this.transform);
         text.GetComponent<Text>().text = trick.name + " - " + trick.points;
+        score += trick.points;
     }
 }

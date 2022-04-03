@@ -6,9 +6,12 @@ public class Tiles : MonoBehaviour
 {
 
     public GameObject tile;
-    public GameObject[][] tiles = new GameObject[][] { new GameObject[3], new GameObject[3], new GameObject[3] };
+    public GameObject[][] tiles = new GameObject[][] { new GameObject[5], new GameObject[5], new GameObject[5] };
 
     public GameObject[] possibleTiles;
+    public GameObject[] barrenTiles;
+    public GameObject reunaLeft;
+    public GameObject reunaRight;
     private Vector3 startPos;
 
 
@@ -35,16 +38,29 @@ public class Tiles : MonoBehaviour
     {
         for (int y = 0; y < 3; y++)
         {
-            createRow(y);
+            createRow(y, true);
         }
     }
 
-    void createRow(int y)
+    void createRow(int y, bool barren = false)
     {
-        for (int x = 0; x < 3; x++)
+        for (int x = 0; x < 5; x++)
         {   
             Vector3 pos = startPos + new Vector3(-x * 50, 0, -y * 50);
-            GameObject g = Instantiate(GetTile(), pos, tile.transform.rotation, this.transform);
+
+            GameObject g;
+            if (x == 0)
+            {
+                g = Instantiate(reunaLeft, pos, tile.transform.rotation, this.transform);
+            }
+            if (x == 4)
+            {
+                g = Instantiate(reunaRight, pos, tile.transform.rotation, this.transform);
+            }
+            else
+            {
+                g = Instantiate(GetTile(barren), pos, tile.transform.rotation, this.transform);
+            }
             g.name = x + " + " + y;
             tiles[y][x] = g;
         }
@@ -52,11 +68,11 @@ public class Tiles : MonoBehaviour
 
     public void shiftDown()
     {
-        GameObject[] temp = new GameObject[3];
+        GameObject[] temp = new GameObject[5];
         for (int y = 0; y < 3; y++)
         {
-            temp = new GameObject[3];
-            for (int x = 0; x < 3; x++)
+            temp = new GameObject[5];
+            for (int x = 0; x < 5; x++)
             {
                 temp[x] = tiles[y][x];
 
@@ -67,7 +83,7 @@ public class Tiles : MonoBehaviour
             }
 
             // if not first row
-            if (y > 0)
+            if (y > 0)  
             {
                 tiles[y - 1] = temp;
             }
@@ -77,8 +93,13 @@ public class Tiles : MonoBehaviour
         setPos();
     }
 
-    public GameObject GetTile()
+    public GameObject GetTile(bool barren)
     {
+        if (barren)
+        {
+            return barrenTiles[Random.Range(0, barrenTiles.Length)];
+        }
+
         return possibleTiles[Random.Range(0, possibleTiles.Length)];
     }
 }

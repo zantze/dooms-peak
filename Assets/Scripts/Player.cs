@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -50,6 +51,12 @@ public class Player : MonoBehaviour
     private bool death = false;
     private float deathTimer = 0f;
 
+    public AudioSource hiihtoSound;
+    public AudioSource windSound;
+    public AudioSource hitSound;
+    public AudioSource moanSound;
+    public AudioSource takkiSound;
+
 
     public Tiles tiles;
     // Start is called before the first frame update
@@ -60,6 +67,7 @@ public class Player : MonoBehaviour
         cc = GetComponent<CharacterController>();
         goDir = transform.forward;
         targetDir = transform.forward;
+        Variables.current.score = 0;
         
     }
 
@@ -86,19 +94,29 @@ public class Player : MonoBehaviour
             hitting = false;
         }
 
+        if (grounded)
+        {
+            hiihtoSound.volume = Mathf.Clamp(speed / 10, 0.2f, 0.6f);
+        }
 
+        else
+        {
+            hiihtoSound.volume = 0f;
+        }
+        
         speed += Time.deltaTime / 4;
-        downwardSpeed = speed;
+        downwardSpeed += Time.deltaTime / 9;
 
         go = new Vector3(0, go.y, 0);
 
-        go += transform.forward;
+        go += transform.forward * downwardSpeed;
 
         if (speed > 10)
         {
             speed = 10;
         }
 
+        windSound.pitch = 1.5f * (speed / 10);
 
         if (grounded)
         {
@@ -121,6 +139,9 @@ public class Player : MonoBehaviour
         if (losetrack && grounded)
         {
             snowEffect.Play();
+
+            if (speed > 2f)
+                speed -= Time.deltaTime * 5;
         }
 
         else
@@ -272,6 +293,12 @@ public class Player : MonoBehaviour
             {
                 Time.timeScale = 1f;
             }
+
+            if (deathTimer > 2.5f)
+            {
+                deathTimer = 0;
+                SceneManager.LoadScene("GameOver", LoadSceneMode.Single);
+            }
         }
     }
 
@@ -403,6 +430,16 @@ public class Player : MonoBehaviour
 
     public void Die()
     {
+        if (death) return;
+
+        windSound.Stop();
+        hiihtoSound.Stop();
+
+        hitSound.Play();
+        moanSound.Play();
+        takkiSound.Play();
+
+
         Transform dude = visual.Find("radLad");
         dude.gameObject.SetActive(false);
         ragdoll.SetActive(true);
